@@ -1,11 +1,6 @@
-# Tutorial: How to build a Maven Plugin
+# Remove maven package from AWS codeartifact
 
-This repository contains example code for an Apache Maven Plugin.  To see see how this was build, take a look at the corresponding blog post: [How to Build a Maven Plugin](https://developer.okta.com/blog/2019/09/23/tutorial-build-a-maven-plugin)
-
-**Prerequisites:**
-
-- [Java 8](https://adoptopenjdk.net/)
-- [Maven 3](https://maven.apache.org/download.cgi)
+This repository is a maven plugin to allows delete maven package from AWS codeartifact before deploy the maven package version.
 
 ## Getting Started
 
@@ -18,6 +13,6 @@ mvn install
 
 ## Run it!
 
-```bash
+```xml
 mvn com.okta.example:example-maven-plugin:version
 ```

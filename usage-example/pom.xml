@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.example</groupId>
+    <artifactId>sample-package</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.aldunelabs.maven.codeartifact</groupId>
+                <artifactId>delete-codeartifact-maven-plugin</artifactId>
+                <version>1.0.0</version>
+                <configuration>
+                    <region>${env.CODEARTIFACT_REGION}</region>
+                    <owner>${env.CODEARTIFACT_DOMAIN_OWNER}</owner>
+                    <domain>${env.CODEARTIFACT_DOMAIN}</domain>
+                    <repository>${env.CODEARTIFACT_REPOSITORY}</repository>
+                    <profile>${env.CODEARTIFACT_PROFILE}</profile>
+                    <accesskey>${env.CODEARTIFACT_ACCESSKEY}</accesskey>
+                    <secretkey>${env.CODEARTIFACT_SECRETKEY}</secretkey>
+                    <token>${env.CODEARTIFACT_SESSIONTOKEN}</token>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <pluginRepositories>
+		<pluginRepository>
+			<id>com.aldunelabs.maven.codeartifact</id>
+			<url>https://maven.pkg.github.com/Fred78290/delete-codeartifact-maven-plugin</url>
+		</pluginRepository>
+	</pluginRepositories>
+
+</project>
