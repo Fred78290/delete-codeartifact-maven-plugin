@@ -30,7 +30,7 @@
 
     <pluginRepositories>
 		<pluginRepository>
-			<id>com.aldunelabs.maven.codeartifact</id>
+			<id>github</id>
 			<url>https://maven.pkg.github.com/Fred78290/delete-codeartifact-maven-plugin</url>
 		</pluginRepository>
 	</pluginRepositories>
