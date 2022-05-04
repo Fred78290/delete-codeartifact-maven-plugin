@@ -50,13 +50,20 @@ public class MavenAwsDeleteArtifact extends AbstractMojo {
 	@Parameter(defaultValue = "", name = "token", property = "AWS_SESSIONTOKEN")
 	String token;
 
+	private static boolean isNullOrEmpty(String str) {
+		if (str == null)
+			return true;
+		return str.isEmpty();
+	}
+
 	private AWSCredentialsProvider buildCredentialsProvider() {
 
-		if (profile != null && !profile.isEmpty()) {
+		if (isNullOrEmpty(profile) == false) {
 			return new ProfileCredentialsProvider(profile);
-		} else if (accesskey != null && secretkey != null && token != null && !accesskey.isEmpty() && !secretkey.isEmpty() && !token.isEmpty()) {
+		} else if (isNullOrEmpty(accesskey) == false && isNullOrEmpty(secretkey) == false
+				&& isNullOrEmpty(token) == false) {
 			return new AWSStaticCredentialsProvider(new BasicSessionCredentials(accesskey, secretkey, token));
-		} else if (accesskey != null && secretkey != null && !accesskey.isEmpty() && !secretkey.isEmpty()) {
+		} else if (isNullOrEmpty(accesskey) == false && isNullOrEmpty(secretkey) == false) {
 			return new AWSStaticCredentialsProvider(new BasicAWSCredentials(accesskey, secretkey));
 		}
 
@@ -65,12 +72,10 @@ public class MavenAwsDeleteArtifact extends AbstractMojo {
 
 	@Override
 	public void execute() throws MojoExecutionException, MojoFailureException {
-		AWSCodeArtifactClientBuilder builder = AWSCodeArtifactClientBuilder.standard().withRegion(region);
-		AWSCredentialsProvider credentialsProvider = buildCredentialsProvider();
+		dumpProperties();
 
-		if (credentialsProvider != null)
-			builder.withCredentials(credentialsProvider);
-
+		AWSCodeArtifactClientBuilder builder = AWSCodeArtifactClientBuilder.standard().withRegion(region)
+				.withCredentials(buildCredentialsProvider());
 		AWSCodeArtifact codeartifact = builder.build();
 
 		try {
@@ -100,4 +105,21 @@ public class MavenAwsDeleteArtifact extends AbstractMojo {
 				project.getVersion()));
 	}
 
+	private void dumpProperty(String name, String value) {
+		if (isNullOrEmpty(value))
+			getLog().info(String.format("%s not defined", name));
+		else
+			getLog().info(String.format("%s=%s", name, value));
+	}
+
+	private void dumpProperties() {
+		dumpProperty("region", region);
+		dumpProperty("repository", repository);
+		dumpProperty("owner", owner);
+		dumpProperty("domain", domain);
+		dumpProperty("profile", profile);
+		dumpProperty("accesskey", accesskey);
+		dumpProperty("secretkey", secretkey);
+		dumpProperty("token", token);
+	}
 }
