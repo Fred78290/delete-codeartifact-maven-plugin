@@ -17,6 +17,7 @@ import com.amazonaws.services.codeartifact.AWSCodeArtifact;
 import com.amazonaws.services.codeartifact.AWSCodeArtifactClientBuilder;
 import com.amazonaws.services.codeartifact.model.AWSCodeArtifactException;
 import com.amazonaws.services.codeartifact.model.DeletePackageVersionsRequest;
+import com.amazonaws.services.codeartifact.model.DescribePackageVersionRequest;
 import com.amazonaws.services.codeartifact.model.PackageFormat;
 import com.amazonaws.services.codeartifact.model.ResourceNotFoundException;
 
@@ -79,15 +80,20 @@ public class MavenAwsDeleteArtifact extends AbstractMojo {
 		AWSCodeArtifact codeartifact = builder.build();
 
 		try {
-			// @formatter:off
-			codeartifact.deletePackageVersions(new DeletePackageVersionsRequest().withDomain(this.domain)
-					.withDomainOwner(owner)
-					.withFormat(PackageFormat.Maven)
-					.withRepository(repository)
-					.withNamespace(project.getGroupId())
-					.withPackage(project.getArtifactId())
-					.withVersions(project.getVersion()));
-			// @formatter:on
+			if (isPackageVersionPresent(codeartifact)) {
+				// @formatter:off
+				codeartifact.deletePackageVersions(new DeletePackageVersionsRequest().withDomain(this.domain)
+						.withDomainOwner(owner)
+						.withFormat(PackageFormat.Maven)
+						.withRepository(repository)
+						.withNamespace(project.getGroupId())
+						.withPackage(project.getArtifactId())
+						.withVersions(project.getVersion()));
+				// @formatter:on
+			} else {
+				getLog().info(String.format("The artifact %s:%s:%s, doesn't exist", project.getGroupId(),
+						project.getArtifactId(), project.getVersion()));
+			}
 		} catch (ResourceNotFoundException e) {
 			// Silent
 			getLog().info(String.format("The artifact %s:%s:%s, doesn't exist", project.getGroupId(),
@@ -103,6 +109,22 @@ public class MavenAwsDeleteArtifact extends AbstractMojo {
 
 		getLog().info(String.format("The artifact %s:%s:%s is deleted", project.getGroupId(), project.getArtifactId(),
 				project.getVersion()));
+	}
+
+	private boolean isPackageVersionPresent(AWSCodeArtifact codeartifact) {
+		// @formatter:off
+		try {
+			codeartifact.describePackageVersion(new DescribePackageVersionRequest().withDomain(domain).withFormat(PackageFormat.Maven)
+						.withRepository(repository)
+						.withNamespace(project.getGroupId())
+						.withPackage(project.getArtifactId())
+						.withPackageVersion(project.getVersion()));
+		} catch (ResourceNotFoundException e) {
+			return false;
+		}
+		// @formatter:on
+		
+		return true;
 	}
 
 	private void dumpProperty(String name, String value) {
