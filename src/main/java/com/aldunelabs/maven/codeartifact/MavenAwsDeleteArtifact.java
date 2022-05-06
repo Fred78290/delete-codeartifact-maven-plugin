@@ -51,6 +51,9 @@ public class MavenAwsDeleteArtifact extends AbstractMojo {
 	@Parameter(defaultValue = "", name = "token", property = "AWS_SESSIONTOKEN")
 	String token;
 
+	@Parameter(defaultValue = "false", name = "skip")
+	String skip;
+
 	private static boolean isNullOrEmpty(String str) {
 		if (str == null)
 			return true;
@@ -75,12 +78,13 @@ public class MavenAwsDeleteArtifact extends AbstractMojo {
 	public void execute() throws MojoExecutionException, MojoFailureException {
 		dumpProperties();
 
-		AWSCodeArtifactClientBuilder builder = AWSCodeArtifactClientBuilder.standard().withRegion(region)
-				.withCredentials(buildCredentialsProvider());
-		AWSCodeArtifact codeartifact = builder.build();
+		if (Boolean.valueOf(skip) == false) {
+			AWSCodeArtifactClientBuilder builder = AWSCodeArtifactClientBuilder.standard().withRegion(region)
+					.withCredentials(buildCredentialsProvider());
+			AWSCodeArtifact codeartifact = builder.build();
 
-		try {
-			if (isPackageVersionPresent(codeartifact)) {
+			try {
+				if (isPackageVersionPresent(codeartifact)) {
 				// @formatter:off
 				codeartifact.deletePackageVersions(new DeletePackageVersionsRequest().withDomain(this.domain)
 						.withDomainOwner(owner)
@@ -90,25 +94,29 @@ public class MavenAwsDeleteArtifact extends AbstractMojo {
 						.withPackage(project.getArtifactId())
 						.withVersions(project.getVersion()));
 				// @formatter:on
-			} else {
+				} else {
+					getLog().info(String.format("The artifact %s:%s:%s, doesn't exist", project.getGroupId(),
+							project.getArtifactId(), project.getVersion()));
+				}
+			} catch (ResourceNotFoundException e) {
+				// Silent
 				getLog().info(String.format("The artifact %s:%s:%s, doesn't exist", project.getGroupId(),
 						project.getArtifactId(), project.getVersion()));
+
+				return;
+			} catch (AWSCodeArtifactException e) {
+				getLog().error(String.format("Unable to delete the artifact %s:%s:%s", project.getGroupId(),
+						project.getArtifactId(), project.getVersion()), e);
+
+				throw new MojoFailureException(e, "Delete package", e.getErrorMessage());
 			}
-		} catch (ResourceNotFoundException e) {
-			// Silent
-			getLog().info(String.format("The artifact %s:%s:%s, doesn't exist", project.getGroupId(),
+
+			getLog().info(String.format("The artifact %s:%s:%s is deleted", project.getGroupId(),
 					project.getArtifactId(), project.getVersion()));
-
-			return;
-		} catch (AWSCodeArtifactException e) {
-			getLog().error(String.format("Unable to delete the artifact %s:%s:%s", project.getGroupId(),
-					project.getArtifactId(), project.getVersion()), e);
-
-			throw new MojoFailureException(e, "Delete package", e.getErrorMessage());
+		} else {
+			getLog().info(String.format("The delete action artifact %s:%s:%s is skipped", project.getGroupId(),
+					project.getArtifactId(), project.getVersion()));
 		}
-
-		getLog().info(String.format("The artifact %s:%s:%s is deleted", project.getGroupId(), project.getArtifactId(),
-				project.getVersion()));
 	}
 
 	private boolean isPackageVersionPresent(AWSCodeArtifact codeartifact) {
@@ -123,7 +131,7 @@ public class MavenAwsDeleteArtifact extends AbstractMojo {
 			return false;
 		}
 		// @formatter:on
-		
+
 		return true;
 	}
 
@@ -143,5 +151,6 @@ public class MavenAwsDeleteArtifact extends AbstractMojo {
 		dumpProperty("accesskey", accesskey);
 		dumpProperty("secretkey", secretkey);
 		dumpProperty("token", token);
+		dumpProperty("skip", skip);
 	}
 }

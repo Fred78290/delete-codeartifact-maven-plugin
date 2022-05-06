@@ -8,7 +8,7 @@
 	<groupId>com.aldunelabs.maven.codeartifact</groupId>
 	<artifactId>delete-codeartifact-maven-plugin</artifactId>
 	<packaging>maven-plugin</packaging>
-	<version>1.0.0</version>
+	<version>1.0.1</version>
 
 	<name>delete-codeartifact Maven Mojo</name>
 	<description>Maven Plugin to delete maven package on aws codeartifact before maven deploy to aws codeartifact</description>
@@ -74,7 +74,7 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-site-plugin</artifactId>
 				<configuration>
-					<outputDirectory>documentation</outputDirectory>
+					<outputDirectory>docs</outputDirectory>
 				</configuration>
 			</plugin>
 		</plugins>
