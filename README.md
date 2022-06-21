@@ -50,3 +50,7 @@ The documentation plugin is available [here](https://fred78290.github.io/delete-
             </pluginRepository>
     </pluginRepositories>
 ```
+
+## CHANGELOG
+
+- 1.0.2: Add delay before return: try to avoid 409 conflict occuring just after delete package operation
