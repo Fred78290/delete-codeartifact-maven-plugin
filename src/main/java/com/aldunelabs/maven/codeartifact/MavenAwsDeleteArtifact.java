@@ -100,11 +100,11 @@ public class MavenAwsDeleteArtifact extends AbstractMojo {
 								.withVersions(project.getVersion()));
 						// @formatter:on
 
-						if (result.getSuccessfulVersions() == null || result.getSuccessfulVersions().isEmpty())
+						if (versionIsEmpty(result.getSuccessfulVersions()) && versionIsEmpty(result.getFailedVersions()) == false)
 							getLog().info(
-									String.format("A problem occured during deletion of artifact %s:%s:%s, reason: %s",
+									String.format("A problem occured during deletion of artifact %s:%s:%s, http:%d reason: %s",
 											project.getGroupId(), project.getArtifactId(), project.getVersion(),
-											result.toString()));
+											result.getSdkHttpMetadata().getHttpStatusCode(), result.toString()));
 					} while (isPackageVersionPresent(codeartifact));
 
 					waitBeforeReturn();
@@ -129,6 +129,10 @@ public class MavenAwsDeleteArtifact extends AbstractMojo {
 			getLog().info(String.format("The delete action artifact %s:%s:%s is skipped", project.getGroupId(),
 					project.getArtifactId(), project.getVersion()));
 		}
+	}
+
+	private boolean versionIsEmpty(java.util.Map<String, ?> version) {
+		return (version == null || version.isEmpty());
 	}
 
 	private void waitBeforeReturn() {
