@@ -17,6 +17,7 @@ import com.amazonaws.services.codeartifact.AWSCodeArtifact;
 import com.amazonaws.services.codeartifact.AWSCodeArtifactClientBuilder;
 import com.amazonaws.services.codeartifact.model.AWSCodeArtifactException;
 import com.amazonaws.services.codeartifact.model.DeletePackageVersionsRequest;
+import com.amazonaws.services.codeartifact.model.DeletePackageVersionsResult;
 import com.amazonaws.services.codeartifact.model.DescribePackageVersionRequest;
 import com.amazonaws.services.codeartifact.model.PackageFormat;
 import com.amazonaws.services.codeartifact.model.ResourceNotFoundException;
@@ -54,6 +55,9 @@ public class MavenAwsDeleteArtifact extends AbstractMojo {
 	@Parameter(defaultValue = "false", name = "skip")
 	String skip;
 
+	@Parameter(defaultValue = "0", name = "delayBeforeReturn")
+	String delayBeforeReturn;
+
 	private static boolean isNullOrEmpty(String str) {
 		if (str == null)
 			return true;
@@ -85,15 +89,28 @@ public class MavenAwsDeleteArtifact extends AbstractMojo {
 
 			try {
 				if (isPackageVersionPresent(codeartifact)) {
-				// @formatter:off
-				codeartifact.deletePackageVersions(new DeletePackageVersionsRequest().withDomain(this.domain)
-						.withDomainOwner(owner)
-						.withFormat(PackageFormat.Maven)
-						.withRepository(repository)
-						.withNamespace(project.getGroupId())
-						.withPackage(project.getArtifactId())
-						.withVersions(project.getVersion()));
-				// @formatter:on
+					do {
+						// @formatter:off
+						DeletePackageVersionsResult result = codeartifact.deletePackageVersions(new DeletePackageVersionsRequest().withDomain(this.domain)
+								.withDomainOwner(owner)
+								.withFormat(PackageFormat.Maven)
+								.withRepository(repository)
+								.withNamespace(project.getGroupId())
+								.withPackage(project.getArtifactId())
+								.withVersions(project.getVersion()));
+						// @formatter:on
+
+						if (result.getSuccessfulVersions() == null || result.getSuccessfulVersions().isEmpty())
+							getLog().info(
+									String.format("A problem occured during deletion of artifact %s:%s:%s, reason: %s",
+											project.getGroupId(), project.getArtifactId(), project.getVersion(),
+											result.toString()));
+					} while (isPackageVersionPresent(codeartifact));
+
+					waitBeforeReturn();
+
+					getLog().info(String.format("The artifact %s:%s:%s is deleted", project.getGroupId(),
+							project.getArtifactId(), project.getVersion()));
 				} else {
 					getLog().info(String.format("The artifact %s:%s:%s, doesn't exist", project.getGroupId(),
 							project.getArtifactId(), project.getVersion()));
@@ -102,20 +119,29 @@ public class MavenAwsDeleteArtifact extends AbstractMojo {
 				// Silent
 				getLog().info(String.format("The artifact %s:%s:%s, doesn't exist", project.getGroupId(),
 						project.getArtifactId(), project.getVersion()));
-
-				return;
 			} catch (AWSCodeArtifactException e) {
 				getLog().error(String.format("Unable to delete the artifact %s:%s:%s", project.getGroupId(),
 						project.getArtifactId(), project.getVersion()), e);
 
 				throw new MojoFailureException(e, "Delete package", e.getErrorMessage());
 			}
-
-			getLog().info(String.format("The artifact %s:%s:%s is deleted", project.getGroupId(),
-					project.getArtifactId(), project.getVersion()));
 		} else {
 			getLog().info(String.format("The delete action artifact %s:%s:%s is skipped", project.getGroupId(),
 					project.getArtifactId(), project.getVersion()));
+		}
+	}
+
+	private void waitBeforeReturn() {
+		long delay = 0;
+
+		if (delayBeforeReturn != null)
+			delay = Long.parseLong(delayBeforeReturn);
+
+		if (delay > 0) {
+			try {
+				Thread.sleep(delay * 1000);
+			} catch (InterruptedException e) {
+			}
 		}
 	}
 
