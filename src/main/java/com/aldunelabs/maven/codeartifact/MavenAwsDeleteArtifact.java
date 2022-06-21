@@ -178,5 +178,6 @@ public class MavenAwsDeleteArtifact extends AbstractMojo {
 		dumpProperty("secretkey", secretkey);
 		dumpProperty("token", token);
 		dumpProperty("skip", skip);
+		dumpProperty("delayBeforeReturn", delayBeforeReturn);
 	}
 }
